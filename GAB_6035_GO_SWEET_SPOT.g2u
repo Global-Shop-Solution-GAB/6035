@@ -1,0 +1,182 @@
+Program.Sub.Preflight.Start
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+'Hook 28530 Presave shipping
+f.Intrinsic.Control.Try
+	f.ODBC.Connection!con.opencompanyconnection(60)
+	f.Intrinsic.Control.CallSub(loadFile)
+	
+	V.Local.sShipViaCode.Declare
+	v.Local.sShipV.Declare
+	v.Local.sShipToN.Declare
+	v.Local.sShipToA1.Declare
+	v.Local.sShipToA2.Declare
+	v.Local.sShipToA3.Declare
+	v.Local.sShipToA4.Declare
+	v.Local.sShipToA5.Declare
+	v.Local.sShipCity.Declare
+	v.Local.sShipState.Declare
+	v.Local.sShipZip.Declare
+	v.Local.sShipCntry.Declare
+	v.Local.sShipAttn.Declare
+	v.Local.sShipPhone.Declare
+	v.Local.sShipContact.Declare
+	v.Local.sShipEmail.Declare
+	v.Local.sTrackNo.Declare
+	v.Local.sCustPO.Declare
+	v.Local.sShipNo.Declare
+	v.Local.sOrderNo.Declare
+	v.Local.sOrderSeq.Declare
+	v.Local.sOrderNoSeq.Declare
+	v.Local.sReadRow.Declare
+	v.Local.sTemp.Declare
+	v.Local.sPartNo.Declare
+	v.Local.sPartDesc.Declare
+	v.Local.sValues.Declare
+	v.Local.sRet.Declare
+	v.Local.sAccessKey.Declare
+	v.Local.sHeadFormat.Declare
+	V.Local.sProducts.Declare
+	v.Local.sSql.Declare
+	v.Local.sID.Declare
+	
+	V.Local.iRowCount.Declare
+	v.Local.i.Declare
+	v.Local.iLen.Declare
+	v.Local.iRet.Declare
+	v.Local.fShippedQty.Declare
+	
+	v.Local.sShipV.Set(v.Passed.000180)
+	v.Local.sOrderNo.Set(v.Passed.FIRST-ORDER)
+	v.Local.sOrderSeq.Set(v.Passed.FIRST-SEQ)
+	v.Local.sShipToN.Set(v.Passed.000112)
+	V.Local.sShipToA1.Set(V.Passed.000114)
+	V.Local.sShipToA2.Set(V.Passed.000118)
+	V.Local.sShipToA3.Set(V.Passed.000120)
+	V.Local.sShipToA4.Set(V.Passed.000122)
+	V.Local.sShipToA5.Set(V.Passed.000124)
+	V.Local.sShipCity.Set(v.Passed.000129)
+	v.Local.sShipState.Set(v.Passed.000130)
+	v.Local.sShipZip.Set(v.Passed.000131)
+	v.Local.sShipCntry.Set(v.Passed.000133)
+	v.Local.sShipAttn.Set(v.Passed.000154)
+	v.Local.sCustPO.Set(v.Passed.000328)
+	v.Local.sShipNo.Set(v.Passed.000168)
+	V.Local.sShipPhone.Set(v.Passed.000363)
+	v.Local.sShipContact.Set(v.Passed.000360)
+	v.Local.sShipEmail.Set(v.Passed.000367)
+	v.Local.sAccessKey.Set(v.DataTable.dt6035(0).APIKey!fieldvaltrim)
+	v.Local.sShipViaCode.Set(v.DataTable.dt6035(0).ShipVia!fieldvaltrim)
+	
+	f.Intrinsic.String.build("select id from V_SHIP_VIA where ucase(Message)='{0}'",v.Local.sShipV.UCase,v.Local.ssql)
+	f.ODBC.Connection!con.executeandreturn(v.local.sSql,v.Local.sID)
+	f.Intrinsic.Control.If(v.Local.sID.UCase,=,v.Local.sShipViaCode)
+		
+		f.Data.DataTable.Create("dtItems",true)
+		f.Data.DataTable.AddColumn("dtItems","Part","string")
+		f.Data.DataTable.AddColumn("dtItems","Desc","string")
+		f.Data.DataTable.AddColumn("dtItems","SQty","string")
+		
+		
+		f.Intrinsic.String.Concat(v.Local.sOrderNo,v.Local.sOrderSeq,v.Local.sOrderNoSeq)
+		f.Intrinsic.String.Concat("access_key:",v.Local.sAccessKey,v.Local.sHeadFormat)
+		F.Intrinsic.BDF.Load("AUX001","AUX001")
+		F.Intrinsic.BDF.ReadRowCount("AUX001",V.Local.iRowCount)
+		f.Intrinsic.Math.Sub(v.Local.iRowCount,1,v.Local.iRowCount)
+		
+		'Build the string for all of the products
+		f.Intrinsic.Control.For(v.Local.i,0,v.Local.iRowCount,1)
+			F.Intrinsic.BDF.ReadRow("AUX001",V.Local.i,V.Local.sReadRow)
+			F.Intrinsic.String.Split(V.Local.sReadRow,"|~|",V.Local.sTemp)
+			v.Local.fShippedQty.Set(v.Local.sTemp(3))
+			v.Local.sPartNo.Set(v.Local.sTemp(8))
+			v.Local.sPartDesc.Set(v.Local.sTemp(9))
+			f.Intrinsic.Control.If(v.Local.fShippedQty,<>,0)
+				f.Intrinsic.String.Build("{ {0}productcode{0}: {0}{1}{0}, {0}Description{0}:{0}{2}{0}, {0}Units{0}:{0}{3}{0} },",v.Ambient.DblQuote,v.Local.sPartNo.Trim,v.Local.sPartDesc.Trim,v.Local.fShippedQty,v.Local.sTemp)
+				f.Intrinsic.String.Concat(v.Local.sProducts,v.Local.sTemp,v.Local.sProducts)
+			f.Intrinsic.Control.EndIf
+			
+		f.Intrinsic.Control.Next(v.local.i)
+		
+		'In case there is a comma, take it off.
+		f.Intrinsic.String.Len(v.Local.sProducts,v.Local.iLen)
+		f.Intrinsic.Math.Sub(v.Local.iLen,1,v.Local.iLen)
+		f.Intrinsic.String.Left(v.Local.sProducts,v.Local.iLen,v.Local.sProducts)
+		
+		f.Intrinsic.String.Build("[{ {0}packingslipno{0} : {0}{1}{0}, {0}consignee{0} : {0}{2}{0}, {0}address1{0} : {0}{3}{0}, {0}address2{0} : {0}{4}{0}, {0}city{0} : {0}{5}{0} , {0}postcode{0} : {0}{6}{0}, {0}contactphone{0} : {0}{8}{0}, {0}contactname{0} : {0}{9}{0}, {0}email{0} : {0}{10}{0}, {0}Products{0}: [{7}]  }]",v.Ambient.DblQuote,v.Local.sOrderNoSeq,v.Local.sShipToN,v.Local.sShipToA1,v.Local.sShipToA2,v.Local.sShipCity,v.Local.sShipZip,v.local.sProducts,v.Local.sShipPhone,v.Local.sShipContact,v.Local.sShipEmail,v.Local.sValues)
+		F.Communication.REST.SetProperty("ContentType","application/json")
+		F.Communication.REST.SetProperty("OtherHeaders",v.Local.sHeadFormat)
+		f.Communication.REST.SetProperty("PostData",v.Local.sValues)
+		F.Communication.REST.Post("http://api.gosweetspot.com/api/customerorders")
+		f.Communication.REST.Reset
+		
+		f.Intrinsic.UI.Msgbox("Order has been sent to GoSweetSpot, has packing label been printed properly?","Go Sweet Spot Integration",3,v.Local.iRet)
+		f.Intrinsic.Control.If(v.Local.iRet,=,6)
+			f.Intrinsic.Control.CallSub(getConsignmentNo,"OrderNoSeq",v.Local.sOrderNoSeq)
+			f.Intrinsic.Variable.ArgToVar("rCN",v.Local.sTrackNo)
+			v.Passed.000138.Set(v.Local.sTrackNo)
+		f.Intrinsic.Control.ElseIf(v.Local.iRet,=,7)
+			v.Passed.777777.Set(true)
+			f.Intrinsic.Control.CallSub(unload)
+		f.Intrinsic.Control.EndIf
+	f.Intrinsic.Control.EndIf
+	
+	f.Intrinsic.Control.CallSub(unload)
+f.Intrinsic.Control.Catch
+	f.Intrinsic.UI.Msgbox(v.Ambient.ErrorDescription)
+	v.Passed.777777.Set(True)
+	f.Intrinsic.Control.CallSub(unload)
+f.Intrinsic.Control.endtry
+Program.Sub.Main.End
+
+Program.Sub.getConsignmentNo.Start
+f.Intrinsic.Control.Try
+	v.Local.sAccessKey.Declare
+	v.Local.sOrderNoSeq.Declare
+	v.Local.sHeadFormat.Declare
+	v.Local.sUrl.Declare
+	v.Local.sret.Declare
+	
+	v.Local.sAccessKey.Set(v.DataTable.dt6035(0).APIKey!fieldvaltrim)
+	v.Local.sOrderNoSeq.Set(v.Args.OrderNoSeq)
+	f.Intrinsic.String.Concat("access_key:",v.Local.sAccessKey,v.Local.sHeadFormat)
+	f.Intrinsic.String.build("http://api.gosweetspot.com/api/shipments?ordernumbers={0}",v.Local.sOrderNoSeq,v.Local.sUrl)
+	F.Communication.REST.SetProperty("ContentType","application/json")
+	F.Communication.REST.SetProperty("OtherHeaders",v.Local.sHeadFormat)
+	
+	F.Communication.REST.Get(v.Local.sUrl)	
+	F.Communication.REST.SetProperty("XPATH", "/json/Results/[1]/ConsignmentNo")
+	F.Communication.REST.ReadProperty("XSUBTREE", v.Local.sRet)
+	F.Communication.REST.ReadProperty("XTEXT", v.Local.sRet)
+	F.Intrinsic.String.Replace(V.Local.sret,v.Ambient.DblQuote,"",v.Local.sret)
+	
+	f.Intrinsic.Variable.AddRV("rCN",v.Local.sret)
+	
+f.Intrinsic.Control.Catch
+	f.Intrinsic.UI.Msgbox(v.Ambient.ErrorDescription)
+	v.Passed.777777.Set(True)
+	f.Intrinsic.Control.CallSub(unload)
+f.Intrinsic.Control.endtry
+Program.Sub.getConsignmentNo.End
+
+Program.Sub.loadFile.Start
+f.Intrinsic.Control.Try
+	v.Local.sFile.Declare
+	f.Intrinsic.String.Concat(v.Caller.gasdir,"\GAB_6035_GO_SWEET_SPOT.xml",v.Local.sFile)
+	f.Data.DataTable.CreateFromXML("dt6035",v.Local.sFile,true)
+f.Intrinsic.Control.Catch
+	f.Intrinsic.UI.Msgbox(v.Ambient.ErrorDescription)
+	f.Intrinsic.Control.CallSub(unload)
+f.Intrinsic.Control.EndTry
+Program.Sub.loadFile.end
+
+Program.Sub.unload.Start
+f.ODBC.Connection!con.Close
+f.Intrinsic.Control.End
+Program.Sub.unload.End
+
+Program.Sub.Comments.Start
+${$5$}$3.0.0.0$}$1
+${$6$}$rfisher$}$20200706084518327$}$b10QVt26jzz6R0J+Y14BUjvWwMpAez4twKgLiSUwHbUQw1ztOTKGwKqv2sje9t3eBigAOt5fn0k=
+Program.Sub.Comments.End
