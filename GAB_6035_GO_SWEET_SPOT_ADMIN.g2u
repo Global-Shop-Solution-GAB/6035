@@ -1,0 +1,129 @@
+Program.Sub.ScreenSU.Start
+Gui.frmGoSweetSpotAdmin..Create(BaseForm)
+Gui.frmGoSweetSpotAdmin..Caption("Go Sweet Spot Admin Setup")
+Gui.frmGoSweetSpotAdmin..Size(519,181)
+Gui.frmGoSweetSpotAdmin..MinX(0)
+Gui.frmGoSweetSpotAdmin..MinY(0)
+Gui.frmGoSweetSpotAdmin..Position(0,0)
+Gui.frmGoSweetSpotAdmin..AlwaysOnTop(False)
+Gui.frmGoSweetSpotAdmin..FontName("Tahoma")
+Gui.frmGoSweetSpotAdmin..FontSize(8.25)
+Gui.frmGoSweetSpotAdmin..ControlBox(True)
+Gui.frmGoSweetSpotAdmin..MaxButton(True)
+Gui.frmGoSweetSpotAdmin..MinButton(True)
+Gui.frmGoSweetSpotAdmin..MousePointer(0)
+Gui.frmGoSweetSpotAdmin..Moveable(True)
+Gui.frmGoSweetSpotAdmin..Sizeable(True)
+Gui.frmGoSweetSpotAdmin..ShowInTaskBar(True)
+Gui.frmGoSweetSpotAdmin..TitleBar(True)
+Gui.frmGoSweetSpotAdmin..Event(UnLoad,frmGoSweetSpotAdmin_UnLoad)
+Gui.frmGoSweetSpotAdmin.txtAPIKey.Create(TextBox,"",True,459,20,0,9,32,True,0,"Tahoma",8.25,,1)
+Gui.frmGoSweetSpotAdmin.lbl1.Create(Label,"Go Sweet Spot API Key:",True,116,13,0,10,16,True,0,"Tahoma",8.25,,0,0)
+Gui.frmGoSweetSpotAdmin.lbl1.BorderStyle(0)
+Gui.frmGoSweetSpotAdmin.lbl2.Create(Label,"Ship Via Trigger:",True,78,13,0,11,62,True,0,"Tahoma",8.25,,0,0)
+Gui.frmGoSweetSpotAdmin.lbl2.BorderStyle(0)
+Gui.frmGoSweetSpotAdmin.txtShipVia.Create(TextBox,"",True,100,20,0,11,79,True,0,"Tahoma",8.25,,1)
+Gui.frmGoSweetSpotAdmin.cmdBrowse.Create(Button)
+Gui.frmGoSweetSpotAdmin.cmdBrowse.Enabled(True)
+Gui.frmGoSweetSpotAdmin.cmdBrowse.Visible(True)
+Gui.frmGoSweetSpotAdmin.cmdBrowse.Zorder(0)
+Gui.frmGoSweetSpotAdmin.cmdBrowse.Size(36,23)
+Gui.frmGoSweetSpotAdmin.cmdBrowse.Position(118,77)
+Gui.frmGoSweetSpotAdmin.cmdBrowse.Caption("^")
+Gui.frmGoSweetSpotAdmin.cmdBrowse.FontName("Tahoma")
+Gui.frmGoSweetSpotAdmin.cmdBrowse.FontSize(8.25)
+Gui.frmGoSweetSpotAdmin.cmdBrowse.Event(Click,cmdBrowse_Click)
+Gui.frmGoSweetSpotAdmin.cmdSave.Create(Button)
+Gui.frmGoSweetSpotAdmin.cmdSave.Enabled(True)
+Gui.frmGoSweetSpotAdmin.cmdSave.Visible(True)
+Gui.frmGoSweetSpotAdmin.cmdSave.Zorder(0)
+Gui.frmGoSweetSpotAdmin.cmdSave.Size(75,23)
+Gui.frmGoSweetSpotAdmin.cmdSave.Position(12,110)
+Gui.frmGoSweetSpotAdmin.cmdSave.Caption("Save")
+Gui.frmGoSweetSpotAdmin.cmdSave.FontName("Tahoma")
+Gui.frmGoSweetSpotAdmin.cmdSave.FontSize(8.25)
+Gui.frmGoSweetSpotAdmin.cmdSave.Event(Click,cmdSave_Click)
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+Function.Intrinsic.UI.UsePixels ' Allows you to use Pixels instead of Twips throughout
+'Load File
+f.Intrinsic.Control.CallSub(loadFile)
+gui.frmGoSweetSpotAdmin.cmdBrowse.SetFocus(1)
+gui.frmGoSweetSpotAdmin..Show
+Program.Sub.Main.End
+
+Program.Sub.loadFile.Start
+f.Intrinsic.Control.Try
+	v.Local.sFile.Declare
+	v.Local.bFileExists.Declare
+	f.Intrinsic.String.Concat(v.Caller.GasDir,"\GAB_6035_GO_SWEET_SPOT.xml",v.Local.sFile)
+	f.Intrinsic.File.Exists(v.Local.sFile,v.Local.bFileExists)
+	f.Intrinsic.Control.If(v.Local.bFileExists)
+		f.Data.DataTable.CreateFromXML("dt6035",v.Local.sFile,true)
+		gui.frmGoSweetSpotAdmin.txtAPIKey.Text(v.DataTable.dt6035(0).APIKey!fieldvaltrim)
+		gui.frmGoSweetSpotAdmin.txtShipVia.Text(v.DataTable.dt6035(0).ShipVia!fieldvaltrim)
+	f.Intrinsic.Control.Else
+		f.Data.DataTable.Create("dt6035",true)
+		f.Data.DataTable.AddColumn("dt6035","APIKey","string")
+		f.Data.DataTable.AddColumn("dt6035","ShipVia","string")
+		f.Data.DataTable.AddRow("dt6035","APIKey","","ShipVia","")
+	f.Intrinsic.Control.EndIf
+f.Intrinsic.Control.Catch
+	f.Intrinsic.UI.Msgbox(v.Ambient.ErrorDescription)
+	f.Intrinsic.Control.CallSub(frmGoSweetSpotAdmin_UnLoad)
+f.Intrinsic.Control.EndTry
+Program.Sub.loadFile.End
+
+Program.Sub.frmGoSweetSpotAdmin_UnLoad.Start
+f.Intrinsic.Control.End
+Program.Sub.frmGoSweetSpotAdmin_UnLoad.End
+
+Program.Sub.cmdBrowse_Click.Start
+f.Intrinsic.Control.Try
+	f.ODBC.Connection!con6035.opencompanyconnection
+	V.Local.sSQL.Declare
+	V.Local.sCol.Declare
+	V.Local.sColW.Declare
+	V.Local.sRet.Declare
+	V.Local.sSQL.set("SELECT ID,MESSAGE FROM V_SHIP_VIA")
+	'Split Column Names into an array (*!* delimited string)
+	F.Intrinsic.String.Split("ID*!*Message","*!*",V.Local.sCol)
+	'Split Column widths into an array (*!* delimited string)
+	F.Intrinsic.String.Split("100*!*1000","*!*",V.Local.sColW)
+	F.Intrinsic.UI.Browser("Select a Ship Via Code","con6035",V.Local.sSQL,V.Local.sCol,V.Local.sColW,V.Local.sRet)
+	F.Intrinsic.Control.If(V.Local.sRet,<>,"***CANCEL***")
+		f.Intrinsic.String.Split(v.Local.sRet,"*!*",v.Local.sRet)
+		gui.frmGoSweetSpotAdmin.txtShipVia.Text(v.Local.sRet(0))
+		gui.frmGoSweetSpotAdmin..SetFocus(1)
+	F.Intrinsic.Control.EndIf
+	f.ODBC.Connection!con6035.close
+f.Intrinsic.Control.Catch
+	f.ODBC.Connection!con6035.close
+	f.Intrinsic.UI.Msgbox(v.Ambient.ErrorDescription)
+	f.Intrinsic.Control.CallSub(frmGoSweetSpotAdmin_UnLoad)
+f.Intrinsic.Control.EndTry
+Program.Sub.cmdBrowse_Click.End
+
+Program.Sub.cmdSave_Click.Start
+f.Intrinsic.Control.Try
+	v.Local.sFile.Declare
+	f.Intrinsic.String.Concat(v.Caller.GasDir,"\GAB_6035_GO_SWEET_SPOT.xml",v.Local.sFile)
+	
+	f.Data.DataTable.SetValue("dt6035",0,"APIKey",v.Screen.frmGoSweetSpotAdmin!txtAPIKey.Text,"ShipVia",v.Screen.frmGoSweetSpotAdmin!txtShipVia.Text)
+	f.Data.DataTable.SaveToXML("dt6035",0,true,v.Local.sFile)
+	f.Intrinsic.UI.Msgbox("Successfully Updated")
+f.Intrinsic.Control.Catch
+	f.Intrinsic.UI.Msgbox(v.Ambient.ErrorDescription)
+	f.Intrinsic.Control.CallSub(frmGoSweetSpotAdmin_UnLoad)
+
+f.Intrinsic.Control.EndTry
+Program.Sub.cmdSave_Click.End
+
+Program.Sub.Comments.Start
+${$5$}$3.0.0.0$}$1
+${$6$}$rfisher$}$20200701145011657$}$b10QVt26jzz6R0J+Y14BUjvWwMpAez4twKgLiSUwHbWV+dB+aIgQp1SHLno/iQkHDf0Z8qq4dZc=
+Program.Sub.Comments.End
